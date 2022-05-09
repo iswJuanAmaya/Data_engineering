@@ -1,0 +1,16 @@
+CLOSURE: Es cuando una variable de un scope superior es recordada por una nested function incluso si se elimina la funcion principal
+    reglas para encontrar un closure
+        -debemos tener una nested function
+        -la nested function debe referenciar un valor de un scope superior
+        -la función que envuelve la nested debe retornarla también
+
+Decorador: Es una funcion que recibe como parametro otra funcion, le añade cosas y retorna una funcion diferente.
+   Básicamnte una funcion que le añade super poderes a otra funcion.
+
+Iteradores: Antes de entender qué son los iteradores, primero debemos entender a los iterables. Son todos aquellos objetos que podemos 
+            recorrer en un ciclo. Son aquellas estructuras de datos divisibles en elementos únicos que yo puedo recorrer en un ciclo.
+            en realdiad los iteradores son sugar sintax,estos se convierten en iteradores para poder ser recorridos en un ciclo.
+        
+Generadores: Sugar syntax de los iteradores. Los generadores son funciones que guardan un estado. Es un iterador escrito de forma más simple.
+
+Sets: coleccion desordenada de elementos unicos e inmutables
