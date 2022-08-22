@@ -1,0 +1,349 @@
+#JC 1/8/22
+
+Productos
+---------
+    Simplicita -> https://www.simplicita.mx/
+        es un sistema web cuyo frontend funciona con nuxtjs, vuejs, js, css y html,
+        su backend con flask y python, la bdd está en postgresql, la bdd es diariamente 
+        alimentada por los scrapers, tenemos scrapers individuales, y al ir agregando más
+        páginas se creo un ETL para agilizar estos procesos, el scraping se hace con python,
+        xpath y BS4 
+
+    Dashboard de administrador https://admin.simplicita.mx/
+        es un sistema de administracion interna, su back está fucionado con el de simplicita, su frontend
+        esta aparte en los repositorios construido con NuxtsJS y vuetify.
+        su bdd tmb está combinada con la de simplicita
+
+    pharma -> https://pharma.simplicita.mx/
+        El proyecto original es una paágina web relacionada con el mercado de farma,
+        no tiene repositorio su código está en un servicio de aws, lo hizo CBO con
+        nuxt y vuetify
+
+    staging -> https://staging.simplicita.mx/
+        es un frontend para probar, consume la rama develop del repositorio webpage
+
+    Farma
+        Es un proyecto de ingeniería de datos, su repositorio es Farma, usa python y pandas
+
+Repositorios Simplicita
+------------------------
+    webpage
+        es el frontend de simplicita, esta hecho con NuxtJS, VueJS, html,css y JS
+        nota1: se agregó vuetify pero solo se usa en el landing page.
+        nota2: la carpeta BAKCEND era para probar cosas del backend sin abrir el Repositorio
+        de backend y sin correr ese servidor, pero quedó descontinuado.
+
+    simpli_backend
+        antiguo backend de simplicita, quedó descontinuado a petición de CamiloBayona(CBO)
+        para cambiar un poco el patrón de diseño del back e incorporar en otro servicio de aws.
+
+    Simpli_repo
+        repositorio de backend de simplicita creado por CBO a partir de simpli_backend.
+        es el que actualmente es consumido por el frontend, usa python y flask
+
+    jc
+        en este repositorio se encuentran los scripts individuales de scraping por cada
+        página que se escrapea, se usa python y xpath
+
+    etl_simplicita
+        aqui se encuentra nuestro proceso ETL para el resto de paginas que simplicita "escrapea",
+        fue un proyecto liderado por CBO pero trabajado en su mayoría por JC, usa python, beatifoulSoup4,
+        xpath, y PPOO 
+
+    AdminDashboard
+        se almacena el código de el dashboard de administracion, fue trabajado en su totalidad por 
+        CBO , esta construido en NuxtsJS y Vuetify
+
+    Farma
+        el proyecto de farma, no es el original, ambos reciben el nombre de farma por que de eso tratan, 
+        pero el "original" quedó en un segundo plano cuando empezó el desarrollo de este, farma original
+        es una página web y de momento este proecto es más de ingeniería de datos, usa python y
+        pandas.(al momento de redactar esto, a diferencia del resto este proyecto sigue activo)
+
+    nota1: El proyecto "original" de pharma(https://pharma.simplicita.mx/) no tiene repositorio, fue desarrollado
+    por CBO y su código me parece que está en un servicio de AWS pero no sé exactamente donde.
+
+BDD
+---
+    tenemos una sola bdd que funciona con postgresql, está alojada en amazon. es SQL pero no tiene ninguna relacion, triggers, funciones, procedimientos,
+    son solo tablas, y estás son manipuladas en su totalidad por sql alojado en el backend.
+    la bdd es simpli-develop, sus tablas más importantes son:
+
+    publicaciones:
+        aqui se almacenan las oportunidades recolectadas por los diferentes scrappers, individuales y ETL,
+        cuando su "plazo" vence, se pasan a la tabla expedientes_partitioned
+
+    expedientes_partitioned:
+        Aqui se almacenan las oportunidades historicas, ya sea por que se recolectaron como historicas o porque se recolectaron
+        como vigentes pero su plazo venció.
+
+    anexos:
+        almacena el nombre de los anexos relacionados a una oportunidad, es lo que lista los anexos por nombre
+        en simplicita.mx, almacena solo los nombres, el fichero como tal se encuentra en S3
+
+    alertas_usuario:
+        almacena las alertas que puede guardar un usuario en el frontend, cuando presionas la campanita o el botón generar alerta
+            
+    alerts:
+        almacena las notificaciones de un usuario, las que se ven en la campanita a un lado del nombre de perfil
+            eg: Tienes 1 oportunidad nueva en tu alerta: Medicina
+
+    alerts_ops
+        almacena el historial de una oportunidad
+            eg: Reabrió su plazo de |24/01/2022 12:00| a |07/02/2022 12:00|
+
+    cambios_op:
+        almacena cambios detectados por los scrapers actualizadores, almacena los campos donde detectó un cambio, su versión pasada
+        y la nueva de dicho campo(s)
+
+    cambios_anexos:
+        almacena cambios detectados por los scrapers actualizadores pero solo en sus archivos(archivos nuevos)
+
+    contratos:
+        almacena los contratos relacionados a una oportunidad historica
+
+    fianzas_ops:
+        almacena información relacionada a fianzas, esta informacion viene de un script que mina ciertos documentos,
+        está hecho en R y lo hicieron interns de la universidad de Chihuahua. actualmente está apagado dicho script.
+
+    guardadas_usuario:
+        oportunidades guardadas por el usuario
+
+    users:
+        usuarios registrados en simplicita
+
+
+Arquitectura
+------------
+    Nuestra arquitectura actual está montada en aws, fue diseñada por Camilo,
+    lo más destacable es que tenemos un servidor linux que corre los scrapers de
+    jc y de etl_simplicita(automatizados con cronjobs),
+    nuestro servidor tiene como repositorio JC y etl_simplicita como submodulo
+    de este repositorio.
+    tenemos mas de un millon de 
+    documentos recolectados mediante los scrapers, los que se usaban se dejaron en 
+    S3, pero aquellos que eran menos necesarios que fue la GRAN mayoria se pasaron
+    a s3glacier.
+    nuestro frontend también se encuentra en s3.
+
+
+Simplicita
+----------
+    Simplicita 
+
+      buscador:
+        cuenta con un buscador para oportunidades vigentes e historicas
+        cuando buscas va y busca en sus respectivas tablas, pero vigente solo busca en sql por palabra,  el filtro y ordenamiento lo 
+        hace con js en el frontend, si no buscas palabras trae todas las oportunidades vigentes,
+        mientras que historico al ser tantas oportunidades no se puede hacer así, cuando buscas una oportunidad historica
+        se envían al backend la palabra y los filtros, el filtrado y ordenamiento se hacen en el metodo del bakcend con sql y python.
+        ambas tablas "publicaciones" y "expedientes_partitioned" cuentan con una columna llamada vectors del tipo tsvector, 
+        básicamente almacena los lexemas de las palabras es decir la base de la palabra, esto para agilizar las buquedas,
+        es un tipo de dato optimizado para buscadores y es un recurso propio de postgresql.
+
+      alertas:
+        el usuario puede guardar palabras y filtros de modo que cuando se agreguen nuevas oportunidades que cumplan con dichos filtros
+        se genere una alerta al usuario que puede ser enviada por correo o a traves de las notificaciones.
+          eg. tienes 4 oportunidades nuevas en tu alerta: licis durango
+
+      historial:
+        cuando las oportunidades sufren un cambio en algún campo o agregan un documento el scraper actualizador detecta y guarda el cambio,
+        se transforma y se genera un historial para esa oportunidad.
+          eg. Actualizó su plazo de 15/08/22 a 17/08/22
+          eg: Agregó el documento: 15346_acta_de_referencia.pdf
+
+      notificaciones:
+        Se pueden ver en la campana azul ubicada en la esquina superior derecha, en el menú, se generan a partir del historial o a partir
+        de las alertas. las notificaciones sobre historial se generán sobre las oportunidades guardadas por el usuario solamente.
+
+      anexos:
+        los anexos se almacenan en nombre en la bdd y en fichero en  aws S3,  cuando en el frontend le das click a "ver anexos"
+        se listan desde la bdd, y con el nombre se descarga de s3. el botón "descargar todos los anexos" generaba un zip con todos los anexos
+        pero cuando migramos a s3 no se actualizó ese metodo por lo cual el botón no funciona actualmente.
+      
+
+scrappers
+---------
+    nuestros scrapers están divididos en dos partes, unos que se hicieron de forma individuales
+    dentro del repositorio jc, usan python y xpath en su mayoría o en su totalidad y otros 
+    que están contenidos dentro de un proceso etl en el repo etl_simplicita, aqui se usa python, 
+    xpath, bs4, sqlalchemy y pandas.
+    Podemos además incluir otra clasificación para la totalidad de scrappers, existen scrapers normales,
+    actualizadores e historicos, esto es asi dada la necesidad de tener la información lo más actualizada
+    posible, por ende los scrapers tienen que correr varias veces al día pero por ejemplo la página de compranet
+    tiene 2,000 oportunidades, si las escrapeamos todas el script tardaría 12 horas, pero si buscamos solo las "nuevas"
+    e ignoramos las que ya están en la bdd podría agregar entre 20 y 100 oportunidades, por lo cual el scraper 
+    suele tardar entre 20-50 min, y por este motivo se dividió la lógica de la siguiente forma
+    
+    normal: ignora las oportunidades que ya están en la bdd y recolecta solo las nuevas oportunidades
+        las guarda en la tabla publicaciones y en su columna nueva_op le da el valor True, al terminar el scraper
+        corre la sentencia sql que pasa las oportunidades con plazo vencido a historico, rellena tmb el campo
+        vectors utilizado para el buscador y llama al metodo del backend encargado de enviar los correos.
+    actualizador: ignora las oportunidades "nuevas", se centra en buscar solo aquellas que ya están en la bdd,
+        las detecta y las revisa campo por campo para buscar si hubo algún cambio, si detecta algún cambio 
+        en los campos o algún documento nuevo guarda los cambios en las tablas cabios_op y cambios_anexos respectivamente.
+        esto para efectos del historial.
+        al terminar el scraper corre el script notificacionesDeCambios.py que genera el historial.
+    historico:
+        en algunos casos la fuente de informacion separa su informacion entre vigentes e historico, debido a que el historico 
+        suele ser mucha mas información, por ende se creo esta logica para que vaya y obtenga esas oportunidades y las almacene
+        directamente en la tabla expedientes_partitioned, esto con el fin de evitar errores en alertas y notificaciones, y además 
+        por que este tipo de escraper suele durar mucho mas tiempo.
+    
+    esta lógica está separada por scripts en jc mientras que en ETL está la lógica contenida dentro de todo el proceso etl
+    pero detecta la necesidad del tipo de scraper via parametro cuando se invoca el script.
+
+    JC readme.txt
+    --------------
+        CDMX
+            scraper normal y actualizador para cdmx
+
+        CFE
+            scraper normal y actualizador para la CFE
+
+        compranet
+            scraper normal,historico y acualizador de compranet, nuestro scraper principal
+
+        fianzas
+            script en r creado por interns de la universidad de Chicago para extraer datos de fianzas de ciertos documentos
+            tiene lógica separada pues uno es llamado por el scraper normal y otro por el actualizador. solo para compranet.
+
+        ine
+            scraper normal, historico y acualizador del INE
+
+        jalisco
+            scrapers para diferentes plataformas de jalisco, son el mismo estado de la republica pero
+            tienen diferentes fuentes de información.
+
+        mmary
+            son minadores de documentos parecido al de fianzas.r, revisan cierto tipo de documentos y extraen
+            informacion relevante, uno está en python porque lo hizo Camilo y el otro está en r, fue hecho por
+            Umer, ambos tienen lógica separada pues son llamados por escraper normal y actualizador. solo para compranet.
+
+        pemex
+            iba a ser el scraper de pemex, pero nunca se hizo, probablemente lo mejor sea borrar la carpeta.
+
+        proxieScrapper
+            contiene un scraper que va a revisar a dos páginas buscando proxies validos, si encuentra los escribe en un txt
+            que es leído por scrapers que pudieran necesitar proxy, pero realmente nunca funcionó dada la escazes de proxies
+            en dichas páginas.
+
+        Simplicita
+            tiene diferentes scripts y recursos de prueba, lo unico que se usa es el script notificacionesDeCambios.py el 
+            cual es invocado al final del scraper actualizador, se encarga de ir revisando los cambios detectados a nivel de 
+            campos de la oportunidad y también a nivel de documentos para formar las notificaciones y el historial.
+
+        sql
+            contiene algunas estructuras de tablas y algunas consultas complejas realizadas en algún punto, nada realmente
+            importante
+
+        textract
+            esto está relacionado con una libreria para la lectura de documentos, yo no lo hice no se si sirva de algo.
+
+        main_5.py
+            primera versión del scraper de compranet, nunca se usó realmente.
+
+        requirements.txt
+            muchas carpetas cuentan con sus requirements.txt dando a entender que cuenta con su propio entorno virtual
+            pero en realidad no es así, creo que los agregó Camilo con la idea de que asi fuera, pero al final nunca se usó
+            tal cosa. 
+            
+    etl_simplicita
+    --------------   
+    proceso de Extraccion Transformacion y Carga(ETL) para simplicita, alimenta las tablas publicaciones y expedientes_partitioned,
+    los nuevos escrapers deben ser agregados aqui bajo esta lógica.
+    basicamente el script pipeline.py va invocando el archivo main.py en las carpetas extract, transform y load(en ese orden),
+    extract recibe como parametro el nombre de la página a scrapear, genera un csv que es pasado a transform, transform recibe
+    como parametro el nombre de ese csv, lo carga lo transfa y genera otro csv que se pasa a load, load lo carga, descarga sus 
+    anexos, los almacena en s3, y guarda la oportunidad en la bdd.
+
+    extract
+        opportunities/
+            carpeta usada para almacenar los csv resultado de la extraccion.
+
+        scrapers
+            scripts individuales para cada scraper, utilizan las clases de opp_page_objects.py
+            y pueden contener lógica que sea unica para la página scrapeada
+
+        utils
+            common.py
+                script que carga el archivo de configuracion config.yaml y lo retorna
+            links.py
+                script creado por Camilo para pegar strings en forma de ruta.
+            storage.py
+                modulo que usamos para generar un csv con las oportunidades scrapeadas en
+                la carpeta opportunities/
+
+        config.yaml
+            archivo de cofiguracion utlizado para obtener datos globales de configuracion para una página 
+            especifica, ejemplo, enunciados de xpath, si necesita proxy, si sus fechas necesitan ser formateadas etc.
+            
+        main.py
+            script que invoca los scrapers/scraper_individual.py, recibe como parametro -site el nombre del sitio,
+            y -type el tipo de scraping que va a hacer por defecto toma vigente.
+
+        opp_page_objects.py
+            clases que usan en los scrapers individuales para reutilizar funcionalidades(código).
+
+    transform
+        cleaned_opportunities/
+            aqui se guardan las oportunidades que vienen de la etapa de extraccion ya transformadas(limpiadas y homologadas)
+        common.py
+            script que carga el archivo de configuracion config.yaml y lo retorna
+        main.py
+            este script recibe como parametro el nombre del csv generado por la etapa de extraccion, lo busca en 
+            extract/opportunities/ y lo carga, le aplica diferentes procesos para su limpieza, transformacion, y
+            homologacion. genera un csv que se almacena en ./cleaned_opportunities/
+
+    load
+        downloads/
+            aqui se guardan los archivos descargados de la página, se suben a s3 y se borran de aqui. por ende "siempre" debería estar vacía.
+        base.py
+            se declara la base y session para sqlalchemy
+        common.py
+            script que carga el archivo de configuracion config.yaml y lo retorna
+        main.py
+            script principal que se encarga de la carga de las oportunidades provenientes de ../transform/cleaned_opportunities/
+            a la bdd, descarga sus archivos, los sube a s3, y guarda el nombre de los mismos en la tabla anexos.
+            recibe como parametro el nombre del documento con las oportunidades ya transoformadas y tambien puede
+            recibir el parametro --type indicando si es de tipo vigente o actualizador
+        publication.py
+            se cargan los modelos de publicaciones y expedientes(debería usar expedientes_partitioned si no lo usa es porque 
+            creo que está descontinuado para historico, por eso solo recibe )
+
+    proxy
+        list_proxies.txt
+            txt que contiene los proxies scrapeados y probados por proxy_creator.py
+        proxy_creator.py
+            script que scrapea dos páginas con proxies gratis, los obtiene, los prueba y si pasan la prueba
+            los almacena en list_proxies.txt para que lo usen los scrapers que lo pudieran necesitar
+
+    recursos_de_prueba
+        carpeta que tiene diferentes recursos que se usaron par aprobar, algunos pòdrían servir en el futuro por eso
+        quedaron dentro de esta carpeta, algunos son inutiles.
+
+        borrarDocumentos.py
+            elimina documentos de oportunidades escrapeadas que por algún motivo se borrarán, elimina el fichero de s3
+            y el nombre de la bd
+        change_class_s3.py
+            cambia la clase de objetos de s3 para pasarlos a su capa de glacier y así ahorrar costos.
+        
+        los demás recursos no son realmente utiles para alguien que no sea yo, por lo cual sugeriría que se borracen,.
+
+    crear_actualizador.txt
+        era una documentación que le empece a hacer a Camilo para cuando creara escrapers bajo la lógica etl supiera como
+        agregar la lógica para la version actualizador, pero quedó suspendida esa actividad, igual podría quedarse ahi
+        por si de algo sirve.
+
+    pipeline.py
+        este script llama vía terminal los diferentes procesos del ETL, itera sobre una lista de páginas y va llamando
+        pagina por página.
+
+    updater_pipeline.py
+        lo mismo que pipeline.py pero para la version actualizador del scraper
+    
+    requirements.txt
+        Este proyecto cuenta con su entorno virtual, este si está funcionando en el servidor y es vital usarlo
+        y seguir manteniendo este archivo actualizado en caso de ser necesario.
+
+    
