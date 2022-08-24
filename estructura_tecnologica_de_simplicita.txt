@@ -11,7 +11,7 @@ Productos
 
     Dashboard de administrador https://admin.simplicita.mx/
         es un sistema de administracion interna, su back está fucionado con el de simplicita, su frontend
-        esta aparte en los repositorios construido con NuxtsJS y vuetify.
+        esta aparte en los repositorios, construido con NuxtsJS y vuetify por Camilo.
         su bdd tmb está combinada con la de simplicita
 
     pharma -> https://pharma.simplicita.mx/
@@ -33,11 +33,11 @@ Repositorios Simplicita
         nota2: la carpeta BAKCEND era para probar cosas del backend sin abrir el Repositorio
         de backend y sin correr ese servidor, pero quedó descontinuado.
 
-    simpli_backend
+    simpli_repo
         antiguo backend de simplicita, quedó descontinuado a petición de CamiloBayona(CBO)
         para cambiar un poco el patrón de diseño del back e incorporar en otro servicio de aws.
 
-    Simpli_repo
+    Simpli_backend
         repositorio de backend de simplicita creado por CBO a partir de simpli_backend.
         es el que actualmente es consumido por el frontend, usa python y flask
 
@@ -57,8 +57,8 @@ Repositorios Simplicita
     Farma
         el proyecto de farma, no es el original, ambos reciben el nombre de farma por que de eso tratan, 
         pero el "original" quedó en un segundo plano cuando empezó el desarrollo de este, farma original
-        es una página web y de momento este proecto es más de ingeniería de datos, usa python y
-        pandas.(al momento de redactar esto, a diferencia del resto este proyecto sigue activo)
+        es una página web y de momento este proyecto es más de ingeniería de datos, usa python y
+        pandas.(al momento de redactar esto, a diferencia del resto, este proyecto sigue en desarrollo)
 
     nota1: El proyecto "original" de pharma(https://pharma.simplicita.mx/) no tiene repositorio, fue desarrollado
     por CBO y su código me parece que está en un servicio de AWS pero no sé exactamente donde.
@@ -143,7 +143,9 @@ Simplicita
 
       alertas:
         el usuario puede guardar palabras y filtros de modo que cuando se agreguen nuevas oportunidades que cumplan con dichos filtros
-        se genere una alerta al usuario que puede ser enviada por correo o a traves de las notificaciones.
+        se genere una alerta que puede ser enviada al usuario por correo o a traves de las notificaciones. por defecto estos correos
+        se envian 3 veces al día(cuando teminan de correr los scrapers), pero el usario puede ir a su dashboard y cambiar la Frecuencia
+        con la que quiere recibir los correos.
           eg. tienes 4 oportunidades nuevas en tu alerta: licis durango
 
       historial:
@@ -160,7 +162,56 @@ Simplicita
         los anexos se almacenan en nombre en la bdd y en fichero en  aws S3,  cuando en el frontend le das click a "ver anexos"
         se listan desde la bdd, y con el nombre se descarga de s3. el botón "descargar todos los anexos" generaba un zip con todos los anexos
         pero cuando migramos a s3 no se actualizó ese metodo por lo cual el botón no funciona actualmente.
-      
+    
+    WEBPAGE readme.md
+        BAKCEND
+            carpeta usada al principio para probar y agregar funcionalidades del backend, se creaban aqui los metodos y despues 
+            se pasaban al repositorio del backend, el cual era exactamente igual a session.py, pero cuando llegó Camilo 
+            se decontinuo, por ende ahora podría eliminarse incluso.
+        Pages
+          dashboard -> https://www.simplicita.mx/dashboard
+            es el dashboard de simplicita para los usuarios aqui pueden modificar sus datos, ver sus alertas, sus oportunidades
+            guardadas, datos de su plan, pedir factura, y definir la frecuencia con la que reciben los correos de nuevas oportunidades.
+          licitaciones -> https://www.simplicita.mx/licitaciones?search=medicina
+            se podría decir que está es la página principal, es lo que ocurre cuando usas el buscador, está toda la lógica contenida
+            en este script. es un mundo este script.
+          pagos
+            es el modulo de pagos, funcionaba cuando lo hice, luego Camilo agregó la librería de vuetify para el "nuevo" landing page y
+            hubo un choque de librerías ya que tanto openpay como vuetify usaban jquery y eso generó un error, al final Camilo fue 
+            el encargado del issue y dijo que quedó funcionando. pero no me consta.
+        bitbucket-pipelines.yaml
+            archivo creado por Camilo para la automatización de despliegues
+
+    simpli_backend readme.md
+        connections/
+            conecciones a la bdd con sqlalchemy, lo hizo Camilo, en realidad se usa poco
+        endpoints
+            un monton de scripts que contienen los endpoints y sus metodos que sirven a los diferentes frontend, están
+            separados según se relacionen entre ellos mismos, por ejemplo lo que se encargan de autenticar usuarios,
+            iniciar sesion están en un lado, los que sirven para historico en otro script etc.
+            cfe.py/verCFE
+                este es un metodo especial que obtiene el html de el detalle de una oportunidad
+                para mostrarlo en simplicita cuando el usurio da click en "ver en página".
+            graficas.py
+                estos son los metodos para el licitometro, ese proyecto quedó descontinuado.
+            historic.py
+                metodos para el buscador historicos, es lo que pasa cuando buscas en historico
+                y cuando le das click en "ver contratos"
+            opportunities.py
+                aquí está el buscador vigente, devuelve el historial, devuelve cuando
+                buscas sin palabra, estadisticas y fianzas
+                
+                
+        application.py
+            aquí se levanta la app y aqui se mantienen los metodos que ocupan enviar correos porque no funcionaba
+            con la nueva lógica de Camilo donde ubica los metodos en scripts ubicados en endpoints.
+            /alertasporcorreo
+                este metodo es el encargado de enviar los correos, es invocado por el scraper de 
+                compranet cuando este terminal
+            /enviar alertas
+                metodo original de envio de alertas, actualmente descontinuado por el metodo 
+                alertas por correo que permite detectar la frecuencia con la que el usuario
+                quiere recibir correos.
 
 scrappers
 ---------
