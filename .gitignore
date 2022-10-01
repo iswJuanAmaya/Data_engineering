@@ -2,5 +2,5 @@
 dat_eng_env/
 *.pdf
 *.docx
-*.img
-*.webp
+# *.img
+# *.webp
